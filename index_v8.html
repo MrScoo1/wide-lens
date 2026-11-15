@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wide lens | SPHEREx Time-Lapse &amp; Aladin Lite</title>
+    <script type="text/javascript" src="./aladin_3.9.0-beta.js" charset="utf-8"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #05080f;
+            color: #f8fafc;
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #aladin-lite-div {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .aladin-survey-box {
+            display: none !important;
+        }
+
+        .sidebar {
+            position: relative;
+            z-index: 10;
+            width: 350px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid #1e293b;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .panel-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .panel-section h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 7px 10px;
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: #38bdf8;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+            accent-color: #38bdf8;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0284c7;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #0369a1;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #334155;
+        }
+
+        button.secondary:hover:not(:disabled) {
+            background: #475569;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-bar {
+            margin-top: auto;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #94a3b8;
+            word-break: break-word;
+        }
+
+        .meta-drawer {
+            position: fixed;
+            top: 0;
+            right: -360px;
+            width: 360px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid #1e293b;
+            z-index: 20;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-drawer.open {
+            right: 0;
+        }
+
+        .meta-toggle-btn {
+            position: absolute;
+            left: -42px;
+            top: 42px;
+            width: 42px;
+            height: 120px;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid #334155;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            color: #38bdf8;
+            font-size: 12px;
+            font-weight: 600;
+            writing-mode: vertical-lr;
+            text-orientation: mixed;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0;
+        }
+
+        .meta-toggle-btn:hover {
+            background: #1e293b;
+        }
+
+        .meta-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .meta-content h2 {
+            font-size: 15px;
+            color: #38bdf8;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .meta-group {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .meta-group h3 {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        }
+
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+
+        .meta-key {
+            color: #94a3b8;
+        }
+
+        .meta-val {
+            color: #f8fafc;
+            font-family: monospace;
+            text-align: right;
+            max-width: 190px;
+            word-break: break-all;
+        }
+
+        .flag-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin: 3px 4px 3px 0;
+        }
+
+        .flag-ok {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .flag-warn {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="aladin-lite-div"></div>
+
+    <aside class="sidebar">
+        <h1>Wide lens</h1>
+
+        <div class="panel-section">
+            <h2>1. Navigation &amp; Sky Background (Backend)</h2>
+
+            <label for="preset-select">Quick Test Targets:</label>
+            <select id="preset-select">
+                <option value="">-- Select target or enter manually --</option>
+                <option value="133.795 -7.245">WISE 0855 (Fast Brown Dwarf)</option>
+                <option value="269.452 4.693">Barnard's Star</option>
+                <option value="330.840 -56.786">Epsilon Indi B (Binary Dwarf)</option>
+                <option value="76.956 30.401">RW Aurigae (Variable Star)</option>
+                <option value="248.163 66.755">R Draconis (Variable Star)</option>
+            </select>
+
+            <label for="target-input">Go to Coordinates (RA Dec)</label>
+            <input type="text" id="target-input" value="133.795 -7.245" placeholder="e.g. 133.795 -7.245">
+
+            <label for="cutout-size-select">Cutout Size</label>
+            <select id="cutout-size-select">
+                <option value="10">10 arcmin (Detailed View)</option>
+                <option value="30" selected>30 arcmin (Medium)</option>
+                <option value="60">1 degree (Wide)</option>
+                <option value="120">2 degrees (Maximum)</option>
+            </select>
+
+            <div class="btn-row">
+                <button id="btn-move-camera" style="flex: 2;">Fetch Background</button>
+                <button id="btn-reset-zoom" class="secondary" style="flex: 1;">Center</button>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h2>2. Time-Lapse Player</h2>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">
+                <span>Frame: <strong id="frame-counter" style="color: #38bdf8;">0 / 0</strong></span>
+                <span>Date: <strong id="frame-date" style="color: #f8fafc; font-family: monospace;">—</strong></span>
+            </div>
+
+            <label for="timeline-slider">Timeline:</label>
+            <input type="range" id="timeline-slider" min="0" max="0" step="1" value="0">
+
+            <div class="btn-row">
+                <button type="button" id="btn-prev-frame" class="secondary" style="padding: 6px;">⏮ Prev</button>
+                <button type="button" id="btn-play-pause" style="padding: 6px;">▶ Play</button>
+                <button type="button" id="btn-next-frame" class="secondary" style="padding: 6px;">Next ⏭</button>
+            </div>
+
+            <label for="fps-select">Playback Speed:</label>
+            <select id="fps-select" style="margin-bottom: 0;">
+                <option value="1000">1 fps (Slow)</option>
+                <option value="500" selected>2 fps (Optimal)</option>
+                <option value="250">4 fps (Fast)</option>
+                <option value="100">10 fps (Very Fast)</option>
+            </select>
+        </div>
+
+        <div class="panel-section">
+            <h2>3. Visualization &amp; Histogram</h2>
+
+            <label for="bg-palette-select">Color Palette</label>
+            <select id="bg-palette-select">
+                <option value="grayscale" selected>Grayscale</option>
+                <option value="viridis">Viridis (Scientific)</option>
+                <option value="inferno">Inferno (Thermal)</option>
+                <option value="rainbow">Rainbow (Spectral)</option>
+            </select>
+
+            <label for="stretch-select">Histogram Stretch</label>
+            <select id="stretch-select">
+                <option value="asinh" selected>Asinh (Optimal for Stars)</option>
+                <option value="log">Log (Enhance Faint Objects)</option>
+                <option value="sqrt">Sqrt (Soft Contrast)</option>
+                <option value="linear">Linear</option>
+            </select>
+
+            <label for="min-cut-slider">
+                Black Level (Min Cut): <span id="min-cut-val" style="color: #38bdf8;">1%</span>
+            </label>
+            <input type="range" id="min-cut-slider" min="0" max="100" step="0.5" value="1">
+
+            <label for="max-cut-slider">
+                White Level (Max Cut): <span id="max-cut-val" style="color: #38bdf8;">99.5%</span>
+            </label>
+            <input type="range" id="max-cut-slider" min="5" max="100" step="0.1" value="100">
+
+            <button type="button" id="btn-reset-contrast" class="secondary">Reset Contrast</button>
+        </div>
+
+        <div class="panel-section">
+            <h2>4. Other Missions Overlay (Backend)</h2>
+
+            <label for="overlay-preset-select">Quick Test Targets:</label>
+            <select id="overlay-preset-select">
+                <option value="">-- Select target or enter manually --</option>
+                <option value="133.795 -7.245">WISE 0855 (Fast Brown Dwarf)</option>
+                <option value="269.452 4.693">Barnard's Star</option>
+                <option value="330.840 -56.786">Epsilon Indi B (Binary Dwarf)</option>
+                <option value="76.956 30.401">RW Aurigae (Variable Star)</option>
+                <option value="248.163 66.755">R Draconis (Variable Star)</option>
+            </select>
+
+            <label for="overlay-target-input">Overlay Coordinates (RA Dec)</label>
+            <input type="text" id="overlay-target-input" value="133.795 -7.245" placeholder="e.g. 133.795 -7.245">
+
+            <label for="overlay-cutout-select">Cutout Size</label>
+            <select id="overlay-cutout-select">
+                <option value="10">10 arcmin (Detailed View)</option>
+                <option value="30" selected>30 arcmin (Medium)</option>
+                <option value="60">1 degree (Wide)</option>
+                <option value="120">2 degrees (Maximum)</option>
+            </select>
+
+            <label for="overlay-mission-select">Select Telescope / Survey</label>
+            <select id="overlay-mission-select">
+                <option value="wise" selected>WISE (Infrared Survey)</option>
+                <option value="2mass">2MASS (Near-IR)</option>
+                <option value="dss2">DSS2 (Optical Sky Survey)</option>
+                <option value="galex">GALEX (Ultraviolet)</option>
+            </select>
+
+            <label for="overlay-palette-select">Overlay Color Palette</label>
+            <select id="overlay-palette-select">
+                <option value="inferno" selected>Inferno (Thermal)</option>
+                <option value="viridis">Viridis (Scientific)</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="rainbow">Rainbow (Spectral)</option>
+            </select>
+
+            <div class="btn-row">
+                <button id="btn-overlay-fits" style="flex: 2;">Overlay from Backend</button>
+                <button id="btn-remove-overlay" class="secondary" style="flex: 1; background: #7f1d1d;">Remove</button>
+            </div>
+
+            <div style="padding-top: 8px; border-top: 1px solid #334155;">
+                <label for="overlay-opacity-slider">
+                    Layer Opacity: <span id="overlay-opacity-val" style="color: #38bdf8;">70%</span>
+                </label>
+                <input type="range" id="overlay-opacity-slider" min="0" max="100" step="1" value="70">
+            </div>
+
+            <div id="overlay-timeline-box" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #334155;">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">
+                    <span>Frame: <strong id="overlay-frame-counter" style="color: #38bdf8;">1 / 1</strong></span>
+                    <span id="overlay-frame-date" style="font-family: monospace;"></span>
+                </div>
+
+                <input type="range" id="overlay-timeline-slider" min="0" max="0" step="1" value="0">
+
+                <div class="btn-row" style="margin-bottom: 0;">
+                    <button type="button" id="btn-overlay-prev" class="secondary" style="padding: 5px; font-size: 12px;">◀ Prev</button>
+                    <button type="button" id="btn-overlay-play" class="secondary" style="padding: 5px; font-size: 12px;">▶ Play</button>
+                    <button type="button" id="btn-overlay-next" class="secondary" style="padding: 5px; font-size: 12px;">Next ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-text" class="status-bar">Initializing Aladin Lite...</div>
+    </aside>
+
+    <div id="meta-drawer" class="meta-drawer">
+        <button id="btn-toggle-meta" class="meta-toggle-btn" title="Show/Hide Metadata">
+            FITS Metadata
+        </button>
+        <div class="meta-content">
+            <h2>Frame Metadata</h2>
+            <div id="meta-body">
+                <p style="font-size: 12px; color: #64748b;">Load a frame to inspect headers and flags.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_BASE_URL = 'https://162-120-6-47.sslip.io';
+
+        let aladin = null;
+        let activeFitsLayer = null;
+        let activeOverlayLayer = null;
+        let baseCuts = null;
+
+        let timeSeriesFrames = [];
+        let currentFrameIndex = 0;
+        let playInterval = null;
+        let isPlaying = false;
+        let currentTargetCoords = { ra: 133.795, dec: -7.245 };
+        let defaultFov = 0.9;
+        let isInitialZoomSet = false;
+
+        let overlayTimeSeriesFrames = [];
+        let currentOverlayFrameIndex = 0;
+        let overlayPlayInterval = null;
+        let overlayTargetCoords = null;
+        let isOverlayZoomSet = false;
+
+        const emptyPngBytes = new Uint8Array();
+        const originalFetch = window.fetch;
+
+        window.fetch = function(url, options) {
+            const urlStr = typeof url === 'string' ? url : (url && url.url ? url.url : '');
+
+            if (urlStr.includes('/blank/') && !urlStr.endsWith('/properties')) {
+                return Promise.resolve(new Response(emptyPngBytes, {
+                    status: 200,
+                    headers: { 'Content-Type': 'image/png' }
+                }));
+            }
+
+            if (
+                urlStr.includes('unistra.fr') ||
+                urlStr.includes('MocServer') ||
+                urlStr.includes('P/DSS2') ||
+                urlStr.endsWith('/properties')
+            ) {
+                const fakeProperties = [
+                    'creator_did = ivo://local/blank',
+                    'obs_title = Blank Sky',
+                    'hips_frame = equatorial',
+                    'hips_order = 3',
+                    'hips_tile_width = 1',
+                    'hips_tile_format = png',
+                    'dataproduct_type = image'
+                ].join(String.fromCharCode(10));
+
+                return Promise.resolve(new Response(fakeProperties, {
+                    status: 200,
+                    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+                }));
+            }
+
+            return originalFetch.apply(this, arguments);
+        };
+
+        function setStatus(text, type = 'info') {
+            const statusEl = document.getElementById('status-text');
+            if (statusEl) {
+                statusEl.textContent = text;
+                statusEl.style.color = type === 'error' ? '#f87171' : (type === 'ready' ? '#4ade80' : '#94a3b8');
+            }
+        }
+
+        function parseCoordinates(coordString) {
+            if (!coordString) return null;
+            const cleaned = coordString.trim().replace(/,/g, ' ').replace(/\s+/g, ' ');
+            const parts = cleaned.split(' ');
+            if (parts.length >= 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1]))) {
+                return {
+                    ra: parseFloat(parts[0]),
+                    dec: parseFloat(parts[1])
+                };
+            }
+            return null;
+        }
+
+        function renderMetadata(frameData, layer = null) {
+            const container = document.getElementById('meta-body');
+            if (!container) return;
+
+            if (!frameData) {
+                container.innerHTML = '<p style="font-size: 12px; color: #94a3b8;">No metadata available for this frame.</p>';
+                return;
+            }
+
+            const allFields = { ...frameData, ...(frameData.metadata || {}) };
+            const fitsHeaders = {};
+
+            if (layer) {
+                const rawHeader = layer.header || layer.fitsHeader || (layer.wcs && layer.wcs.header);
+                if (rawHeader && typeof rawHeader === 'object') {
+                    Object.assign(fitsHeaders, rawHeader);
+                }
+                if (typeof layer.getCuts === 'function') {
+                    const cuts = layer.getCuts();
+                    if (Array.isArray(cuts)) {
+                        fitsHeaders['ALADIN_MIN_CUT'] = cuts[0].toFixed(4);
+                        fitsHeaders['ALADIN_MAX_CUT'] = cuts[1].toFixed(4);
+                    }
+                }
+            }
+
+            const telescop = String(allFields.TELESCOP || allFields.telescop || fitsHeaders.TELESCOP || '');
+            const dateStr = String(allFields.date || allFields['DATE-OBS'] || fitsHeaders['DATE-OBS'] || '');
+            const isSpherex = telescop.toUpperCase().includes('SPHEREX') || dateStr.startsWith('2025') || dateStr.startsWith('2026');
+
+            let html = `
+                <div class="meta-group">
+                    <h3>Data Source</h3>
+                    <span class="flag-badge ${isSpherex ? 'flag-ok' : 'flag-warn'}">
+                        ${isSpherex ? 'SPHEREx Mission' : (telescop ? `Archive: ${telescop}` : 'IRSA Archive Survey')}
+                    </span>
+                </div>
+            `;
+
+            const flags = allFields.contamination_flags || allFields.FLAGS || fitsHeaders.FLAGS;
+            html += '<div class="meta-group"><h3>Contamination Flags</h3><div>';
+            if (flags === undefined || flags === null) {
+                html += '<span style="font-size: 12px; color: #64748b;">No flags provided by backend</span>';
+            } else if (Array.isArray(flags)) {
+                html += flags.length === 0
+                    ? '<span class="flag-badge flag-ok">Clean Frame (0 flags)</span>'
+                    : flags.map(f => `<span class="flag-badge flag-warn">${f}</span>`).join('');
+            } else if (typeof flags === 'object') {
+                for (const [flagName, isActive] of Object.entries(flags)) {
+                    html += `<span class="flag-badge ${isActive ? 'flag-warn' : 'flag-ok'}">${flagName}: ${isActive ? 'ACTIVE' : 'OK'}</span>`;
+                }
+            } else {
+                const isClean = flags === 0 || flags === '0' || String(flags).toUpperCase() === 'NONE';
+                html += `<span class="flag-badge ${isClean ? 'flag-ok' : 'flag-warn'}">Bitmask: ${flags}</span>`;
+            }
+            html += '</div></div>';
+
+            const ignoredKeys = new Set(['fits_url', 'url', 'file', 'layer', 'cachedLayer', 'baseCuts', 'metadata', 'contamination_flags']);
+
+            const backendEntries = Object.entries(allFields).filter(([k]) => !ignoredKeys.has(k));
+            if (backendEntries.length > 0) {
+                html += '<div class="meta-group"><h3>Frame Parameters (Backend)</h3>';
+                for (const [key, value] of backendEntries) {
+                    const displayVal = (value !== null && typeof value === 'object') ? JSON.stringify(value) : String(value);
+                    html += `
+                        <div class="meta-row">
+                            <span class="meta-key">${key}</span>
+                            <span class="meta-val">${displayVal}</span>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+            }
+
+            const headerEntries = Object.entries(fitsHeaders).filter(([k]) => !ignoredKeys.has(k));
+            if (headerEntries.length > 0) {
+                html += '<div class="meta-group"><h3>FITS Headers (WCS / Frame)</h3>';
+                for (const [key, value] of headerEntries) {
+                    const displayVal = (value !== null && typeof value === 'object') ? JSON.stringify(value) : String(value);
+                    html += `
+                        <div class="meta-row">
+                            <span class="meta-key">${key}</span>
+                            <span class="meta-val">${displayVal}</span>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function updateFitsVisuals(resetCuts = false) {
+            const minPercent = parseFloat(document.getElementById('min-cut-slider').value);
+            const maxPercent = parseFloat(document.getElementById('max-cut-slider').value);
+
+            document.getElementById('min-cut-val').textContent = `${minPercent}%`;
+            document.getElementById('max-cut-val').textContent = `${maxPercent === 100 ? '99.5' : maxPercent}%`;
+
+            const layer = activeFitsLayer || (aladin && typeof aladin.getBaseImageLayer === 'function' ? aladin.getBaseImageLayer() : null);
+            if (!layer) return;
+
+            const stretch = document.getElementById('stretch-select').value;
+            const currentPalette = document.getElementById('bg-palette-select').value || 'grayscale';
+
+            if (typeof layer.setStretch === 'function') {
+                layer.setStretch(stretch);
+            } else if ('stretch' in layer) {
+                layer.stretch = stretch;
+            }
+
+            if (resetCuts || !baseCuts) {
+                if (typeof layer.getCuts === 'function') {
+                    baseCuts = layer.getCuts();
+                }
+            }
+
+            if (baseCuts && typeof layer.setCuts === 'function') {
+                const [minVal, maxVal] = baseCuts;
+                if (!isNaN(minVal) && !isNaN(maxVal) && maxVal > minVal) {
+                    const range = maxVal - minVal;
+                    const maxFactor = Math.pow(maxPercent / 100, 3);
+                    const newMin = minVal + (range * (minPercent / 100));
+                    const newMax = minVal + (range * maxFactor);
+                    layer.setCuts(newMin, newMax);
+                }
+            }
+
+            if (typeof layer.setColormap === 'function') {
+                layer.setColormap(currentPalette);
+            } else if (typeof layer.setColorMap === 'function') {
+                layer.setColorMap(currentPalette);
+            }
+
+            if (aladin && aladin.view && typeof aladin.view.requestRedraw === 'function') {
+                aladin.view.requestRedraw();
+            }
+        }
+
+        function stopPlayback() {
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+            isPlaying = false;
+            const playBtn = document.getElementById('btn-play-pause');
+            if (playBtn) playBtn.textContent = '▶ Play';
+        }
+
+        function startPlayback() {
+            if (timeSeriesFrames.length <= 1) return;
+            stopPlayback();
+            isPlaying = true;
+            const playBtn = document.getElementById('btn-play-pause');
+            if (playBtn) playBtn.textContent = '⏸ Pause';
+
+            const fpsMs = parseInt(document.getElementById('fps-select').value, 10) || 500;
+            playInterval = setInterval(() => {
+                const nextIdx = (currentFrameIndex + 1) % timeSeriesFrames.length;
+                showFrame(nextIdx);
+            }, fpsMs);
+        }
+
+        function showFrame(index) {
+            if (!timeSeriesFrames || timeSeriesFrames.length === 0) return;
+            currentFrameIndex = index;
+            const frame = timeSeriesFrames[index];
+
+            const counterEl = document.getElementById('frame-counter');
+            if (counterEl) counterEl.textContent = `${index + 1} / ${timeSeriesFrames.length}`;
+
+            const dateEl = document.getElementById('frame-date');
+            if (dateEl) dateEl.textContent = frame.date ? frame.date.split('T')[0] : '—';
+
+            const sliderEl = document.getElementById('timeline-slider');
+            if (sliderEl) sliderEl.value = index;
+
+            if (frame.cachedLayer) {
+                renderMetadata(frame, frame.cachedLayer);
+                aladin.setBaseImageLayer(frame.cachedLayer);
+                activeFitsLayer = frame.cachedLayer;
+                baseCuts = frame.baseCuts || baseCuts;
+                updateFitsVisuals(false);
+                return;
+            }
+
+            const selectedColorMap = document.getElementById('bg-palette-select').value || 'grayscale';
+            const selectedStretch = document.getElementById('stretch-select').value || 'asinh';
+
+            const fitsLayer = aladin.createImageFITS(
+                frame.fits_url,
+                {
+                    name: `frame_${index}`,
+                    colorMap: selectedColorMap,
+                    stretch: selectedStretch
+                },
+                (_ra, _dec, fov) => {
+                    if (currentFrameIndex !== index) return;
+
+                    renderMetadata(frame, fitsLayer);
+
+                    if (!isInitialZoomSet) {
+                        const rawFov = Array.isArray(fov) ? fov[0] : fov;
+                        if (rawFov && !isNaN(rawFov)) {
+                            defaultFov = rawFov * 1.8;
+                        }
+                        aladin.gotoRaDec(currentTargetCoords.ra, currentTargetCoords.dec);
+                        aladin.setFoV(defaultFov);
+                        isInitialZoomSet = true;
+                    }
+
+                    if (typeof fitsLayer.getCuts === 'function') {
+                        frame.baseCuts = fitsLayer.getCuts();
+                        baseCuts = frame.baseCuts;
+                    }
+                    updateFitsVisuals(false);
+                },
+                (err) => {
+                    console.error(`Error loading frame ${index + 1}:`, err);
+                }
+            );
+
+            frame.cachedLayer = fitsLayer;
+            aladin.setBaseImageLayer(fitsLayer);
+            activeFitsLayer = fitsLayer;
+        }
+
+        async function loadSeriesFromBackend(ra, dec) {
+            if (!aladin) return;
+
+            stopPlayback();
+            const btn = document.getElementById('btn-move-camera');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Loading...';
+            }
+
+            const cutoutSize = parseFloat(document.getElementById('cutout-size-select').value) || 30;
+            currentTargetCoords = { ra, dec };
+            defaultFov = (cutoutSize / 60) * 1.8;
+            isInitialZoomSet = false;
+
+            setStatus(`Requesting series for (${ra}, ${dec}), size ${cutoutSize}'...`, 'loading');
+            const apiUrl = `${BACKEND_BASE_URL}/get-fits?ra=${encodeURIComponent(ra)}&dec=${encodeURIComponent(dec)}&size=${encodeURIComponent(cutoutSize)}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+                const data = await response.json();
+                let framesList = [];
+
+                if (Array.isArray(data.frames)) {
+                    framesList = data.frames;
+                } else if (Array.isArray(data)) {
+                    framesList = data;
+                } else if (data.fits_url || data.url || data.file) {
+                    framesList = [{
+                        fits_url: data.fits_url || data.url || data.file,
+                        date: data.date || '',
+                        metadata: data.metadata || null
+                    }];
+                }
+
+                if (framesList.length === 0) {
+                    throw new Error(data.message || data.detail || 'No frames found for these coordinates');
+                }
+
+                timeSeriesFrames = framesList.map(item => {
+                    const rawUrl = item.fits_url || item.url || item.file;
+                    const fullUrl = rawUrl.startsWith('http')
+                        ? rawUrl
+                        : `${BACKEND_BASE_URL}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+                    return { ...item, fits_url: fullUrl, cachedLayer: null, baseCuts: null };
+                });
+
+                const sliderEl = document.getElementById('timeline-slider');
+                if (sliderEl) {
+                    sliderEl.max = timeSeriesFrames.length - 1;
+                    sliderEl.value = 0;
+                }
+
+                setStatus(`Loaded ${timeSeriesFrames.length} frame(s) for RA ${ra}, Dec ${dec}`, 'ready');
+                showFrame(0);
+
+            } catch (error) {
+                const cleanMsg = error.message.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                const shortMsg = cleanMsg.length > 140 ? cleanMsg.slice(0, 140) + '...' : cleanMsg;
+                setStatus(`Error: ${shortMsg}`, 'error');
+                console.error('Error fetching series:', error);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Fetch Background';
+                }
+            }
+        }
+
+        function showOverlayFrame(index) {
+            if (!overlayTimeSeriesFrames || overlayTimeSeriesFrames.length === 0) return;
+            currentOverlayFrameIndex = index;
+            const frame = overlayTimeSeriesFrames[index];
+
+            const counterEl = document.getElementById('overlay-frame-counter');
+            if (counterEl) counterEl.textContent = `${index + 1} / ${overlayTimeSeriesFrames.length}`;
+
+            const dateEl = document.getElementById('overlay-frame-date');
+            if (dateEl) dateEl.textContent = frame.date ? frame.date.split('T')[0] : '';
+
+            const sliderEl = document.getElementById('overlay-timeline-slider');
+            if (sliderEl) sliderEl.value = index;
+
+            const palette = document.getElementById('overlay-palette-select').value || 'inferno';
+            const opacityVal = parseFloat(document.getElementById('overlay-opacity-slider').value) / 100;
+
+            if (frame.cachedLayer) {
+                if (typeof frame.cachedLayer.setOpacity === 'function') frame.cachedLayer.setOpacity(opacityVal);
+                if (typeof frame.cachedLayer.setColormap === 'function') {
+                    frame.cachedLayer.setColormap(palette);
+                } else if (typeof frame.cachedLayer.setColorMap === 'function') {
+                    frame.cachedLayer.setColorMap(palette);
+                }
+                aladin.setOverlayImageLayer(frame.cachedLayer);
+                activeOverlayLayer = frame.cachedLayer;
+                if (aladin.view && typeof aladin.view.requestRedraw === 'function') aladin.view.requestRedraw();
+                return;
+            }
+
+            const overlayLayer = aladin.createImageFITS(
+                frame.fits_url,
+                {
+                    name: `Overlay frame ${index + 1}`,
+                    colorMap: palette,
+                    stretch: 'asinh',
+                    opacity: opacityVal
+                },
+                (_ra, _dec, fov) => {
+                    if (currentOverlayFrameIndex !== index) return;
+
+                    if (!isOverlayZoomSet && overlayTargetCoords) {
+                        const rawFov = Array.isArray(fov) ? fov[0] : fov;
+                        const overlayCutout = parseFloat(document.getElementById('overlay-cutout-select')?.value) || 30;
+                        const targetFov = (rawFov && !isNaN(rawFov)) ? rawFov * 1.8 : (overlayCutout / 60) * 1.8;
+
+                        aladin.gotoRaDec(overlayTargetCoords.ra, overlayTargetCoords.dec);
+                        aladin.setFoV(targetFov);
+                        isOverlayZoomSet = true;
+                    }
+
+                    if (typeof overlayLayer.setOpacity === 'function') overlayLayer.setOpacity(opacityVal);
+                    if (aladin.view && typeof aladin.view.requestRedraw === 'function') aladin.view.requestRedraw();
+                },
+                (err) => {
+                    console.error(`Error loading overlay frame ${index + 1}:`, err);
+                }
+            );
+
+            frame.cachedLayer = overlayLayer;
+            aladin.setOverlayImageLayer(overlayLayer);
+            activeOverlayLayer = overlayLayer;
+        }
+
+        A.init.then(() => {
+            aladin = A.aladin('#aladin-lite-div', {
+                survey: 'blank',
+                backgroundColor: 'rgb(5, 8, 15)',
+                cooFrame: 'J2000',
+                showReticle: true,
+                showZoomControl: true,
+                showFullscreenControl: true,
+                showLayersControl: true,
+                showCooGridControl: true
+            });
+
+            if (typeof aladin.setBackgroundColor === 'function') {
+                aladin.setBackgroundColor('rgb(5, 8, 15)');
+            }
+
+            setStatus('Aladin Lite ready. Connecting to backend...', 'ready');
+
+            document.getElementById('btn-toggle-meta').addEventListener('click', () => {
+                document.getElementById('meta-drawer').classList.toggle('open');
+            });
+
+            const targetInput = document.getElementById('target-input');
+            document.getElementById('preset-select').addEventListener('change', (e) => {
+                if (!e.target.value) return;
+                targetInput.value = e.target.value;
+                const coords = parseCoordinates(e.target.value);
+                if (coords) {
+                    loadSeriesFromBackend(coords.ra, coords.dec);
+                }
+            });
+
+            const initialCoords = parseCoordinates(targetInput.value) || { ra: 133.795, dec: -7.245 };
+            loadSeriesFromBackend(initialCoords.ra, initialCoords.dec);
+
+            document.getElementById('btn-move-camera').addEventListener('click', () => {
+                const coords = parseCoordinates(targetInput.value);
+                if (coords) {
+                    loadSeriesFromBackend(coords.ra, coords.dec);
+                } else {
+                    setStatus('Invalid coordinate format. Example: 133.795 -7.245', 'error');
+                }
+            });
+
+            document.getElementById('btn-reset-zoom').addEventListener('click', () => {
+                if (!aladin) return;
+                aladin.gotoRaDec(currentTargetCoords.ra, currentTargetCoords.dec);
+                aladin.setFoV(defaultFov);
+                setStatus(`Zoom reset to default (${(defaultFov * 60).toFixed(0)}')`, 'info');
+            });
+
+            document.getElementById('btn-prev-frame').addEventListener('click', () => {
+                if (timeSeriesFrames.length === 0) return;
+                stopPlayback();
+                const prevIdx = (currentFrameIndex - 1 + timeSeriesFrames.length) % timeSeriesFrames.length;
+                showFrame(prevIdx);
+            });
+
+            document.getElementById('btn-next-frame').addEventListener('click', () => {
+                if (timeSeriesFrames.length === 0) return;
+                stopPlayback();
+                const nextIdx = (currentFrameIndex + 1) % timeSeriesFrames.length;
+                showFrame(nextIdx);
+            });
+
+            document.getElementById('btn-play-pause').addEventListener('click', () => {
+                if (isPlaying) {
+                    stopPlayback();
+                } else {
+                    startPlayback();
+                }
+            });
+
+            document.getElementById('timeline-slider').addEventListener('input', (e) => {
+                stopPlayback();
+                showFrame(parseInt(e.target.value, 10));
+            });
+
+            document.getElementById('fps-select').addEventListener('change', () => {
+                if (isPlaying) startPlayback();
+            });
+
+            document.getElementById('bg-palette-select').addEventListener('change', () => updateFitsVisuals(false));
+            document.getElementById('stretch-select').addEventListener('change', () => updateFitsVisuals(false));
+            document.getElementById('min-cut-slider').addEventListener('input', () => updateFitsVisuals(false));
+            document.getElementById('max-cut-slider').addEventListener('input', () => updateFitsVisuals(false));
+
+            document.getElementById('btn-reset-contrast').addEventListener('click', () => {
+                document.getElementById('stretch-select').value = 'asinh';
+                document.getElementById('min-cut-slider').value = 1;
+                document.getElementById('max-cut-slider').value = 100;
+                updateFitsVisuals(true);
+            });
+
+            document.getElementById('overlay-preset-select').addEventListener('change', (e) => {
+                if (!e.target.value) return;
+                document.getElementById('overlay-target-input').value = e.target.value;
+                document.getElementById('btn-overlay-fits').click();
+            });
+
+            document.getElementById('btn-overlay-fits').addEventListener('click', async () => {
+                const overlayInputVal = document.getElementById('overlay-target-input').value;
+                const coords = parseCoordinates(overlayInputVal);
+
+                if (!coords) {
+                    setStatus('Invalid coordinate format in Section 4. Example: 133.795 -7.245', 'error');
+                    return;
+                }
+
+                overlayTargetCoords = coords;
+                isOverlayZoomSet = false;
+
+                if (overlayPlayInterval) {
+                    clearInterval(overlayPlayInterval);
+                    overlayPlayInterval = null;
+                    document.getElementById('btn-overlay-play').textContent = '▶ Play';
+                }
+
+                const missionEl = document.getElementById('overlay-mission-select');
+                const mission = missionEl ? missionEl.value : 'wise';
+                const overlayCutout = document.getElementById('overlay-cutout-select')?.value || '30';
+                const btn = document.getElementById('btn-overlay-fits');
+
+                btn.disabled = true;
+                btn.textContent = 'Loading...';
+                setStatus(`Requesting ${mission.toUpperCase()} series for (${coords.ra}, ${coords.dec})...`, 'loading');
+
+                try {
+                    const apiUrl = `${BACKEND_BASE_URL}/get-fits?ra=${encodeURIComponent(coords.ra)}&dec=${encodeURIComponent(coords.dec)}&size=${encodeURIComponent(overlayCutout)}&mission=${encodeURIComponent(mission)}`;
+
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+                    const data = await response.json();
+                    let framesList = [];
+                    if (Array.isArray(data.frames)) {
+                        framesList = data.frames;
+                    } else if (Array.isArray(data)) {
+                        framesList = data;
+                    } else if (data.fits_url || data.url || data.file) {
+                        framesList = [{
+                            fits_url: data.fits_url || data.url || data.file,
+                            date: data.date || ''
+                        }];
+                    }
+
+                    if (framesList.length === 0) {
+                        throw new Error(data.message || `No frames found for mission ${mission.toUpperCase()}`);
+                    }
+
+                    overlayTimeSeriesFrames = framesList.map(item => {
+                        const rawUrl = item.fits_url || item.url || item.file;
+                        const fullUrl = rawUrl.startsWith('http')
+                            ? rawUrl
+                            : `${BACKEND_BASE_URL}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+                        return { ...item, fits_url: fullUrl, cachedLayer: null };
+                    });
+
+                    const timelineBox = document.getElementById('overlay-timeline-box');
+                    const slider = document.getElementById('overlay-timeline-slider');
+                    if (timelineBox) timelineBox.style.display = 'block';
+                    if (slider) {
+                        slider.max = overlayTimeSeriesFrames.length - 1;
+                        slider.value = 0;
+                    }
+
+                    setStatus(`Loaded ${overlayTimeSeriesFrames.length} ${mission.toUpperCase()} frame(s)`, 'ready');
+                    showOverlayFrame(0);
+
+                } catch (error) {
+                    const cleanMsg = error.message.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
+                    setStatus(`Overlay error: ${cleanMsg}`, 'error');
+                    console.error(error);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Overlay from Backend';
+                }
+            });
+
+            document.getElementById('overlay-timeline-slider').addEventListener('input', (e) => {
+                showOverlayFrame(parseInt(e.target.value, 10));
+            });
+
+            document.getElementById('btn-overlay-prev').addEventListener('click', () => {
+                if (overlayTimeSeriesFrames.length === 0) return;
+                const prevIdx = (currentOverlayFrameIndex - 1 + overlayTimeSeriesFrames.length) % overlayTimeSeriesFrames.length;
+                showOverlayFrame(prevIdx);
+            });
+
+            document.getElementById('btn-overlay-next').addEventListener('click', () => {
+                if (overlayTimeSeriesFrames.length === 0) return;
+                const nextIdx = (currentOverlayFrameIndex + 1) % overlayTimeSeriesFrames.length;
+                showOverlayFrame(nextIdx);
+            });
+
+            document.getElementById('btn-overlay-play').addEventListener('click', (e) => {
+                if (overlayTimeSeriesFrames.length <= 1) return;
+                if (overlayPlayInterval) {
+                    clearInterval(overlayPlayInterval);
+                    overlayPlayInterval = null;
+                    e.target.textContent = '▶ Play';
+                } else {
+                    e.target.textContent = '⏸ Pause';
+                    overlayPlayInterval = setInterval(() => {
+                        const nextIdx = (currentOverlayFrameIndex + 1) % overlayTimeSeriesFrames.length;
+                        showOverlayFrame(nextIdx);
+                    }, 1200);
+                }
+            });
+
+            document.getElementById('overlay-palette-select').addEventListener('change', (e) => {
+                if (!activeOverlayLayer) return;
+                if (typeof activeOverlayLayer.setColormap === 'function') {
+                    activeOverlayLayer.setColormap(e.target.value);
+                } else if (typeof activeOverlayLayer.setColorMap === 'function') {
+                    activeOverlayLayer.setColorMap(e.target.value);
+                }
+                if (aladin && aladin.view && typeof aladin.view.requestRedraw === 'function') {
+                    aladin.view.requestRedraw();
+                }
+            });
+
+            document.getElementById('overlay-opacity-slider').addEventListener('input', (e) => {
+                const percent = parseFloat(e.target.value);
+                const valEl = document.getElementById('overlay-opacity-val');
+                if (valEl) valEl.textContent = `${percent}%`;
+
+                if (activeOverlayLayer) {
+                    const alpha = percent / 100;
+                    if (typeof activeOverlayLayer.setOpacity === 'function') {
+                        activeOverlayLayer.setOpacity(alpha);
+                    } else if ('opacity' in activeOverlayLayer) {
+                        activeOverlayLayer.opacity = alpha;
+                    }
+                    if (aladin && aladin.view && typeof aladin.view.requestRedraw === 'function') {
+                        aladin.view.requestRedraw();
+                    }
+                }
+            });
+
+            document.getElementById('btn-remove-overlay').addEventListener('click', () => {
+                if (overlayPlayInterval) {
+                    clearInterval(overlayPlayInterval);
+                    overlayPlayInterval = null;
+                    document.getElementById('btn-overlay-play').textContent = '▶ Play';
+                }
+                if (typeof aladin.setOverlayImageLayer === 'function') {
+                    aladin.setOverlayImageLayer(null);
+                }
+                activeOverlayLayer = null;
+                overlayTimeSeriesFrames = [];
+                const timelineBox = document.getElementById('overlay-timeline-box');
+                if (timelineBox) timelineBox.style.display = 'none';
+                if (aladin && aladin.view && typeof aladin.view.requestRedraw === 'function') {
+                    aladin.view.requestRedraw();
+                }
+                setStatus('Overlay layer and timeline removed', 'info');
+            });
+
+        }).catch(err => {
+            setStatus('Failed to initialize Aladin Lite', 'error');
+            console.error(err);
+        });
+    </script>
+</body>
+</html>
